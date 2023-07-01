@@ -51,7 +51,7 @@ json(URL)
 
         const data = monthlyVariance.map(({year, month, variance}) => {
            return { 
-            year,
+            year: year.toString(),
             temperature: +parseFloat(baseTemperature + variance).toFixed(1), 
             variance,
             month: months[month - 1]
@@ -106,7 +106,7 @@ json(URL)
 
         svg.append('g')
            .attr('transform', `translate(0,${height - margin.bottom})`)
-           .call(xAxis)
+           .call(xAxis.tickValues(xScale.domain().map(year => year.endsWith('0') ? year: '')))
 
         svg.append('g')
            .attr('transform', `translate(${margin.left},0)`)
