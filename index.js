@@ -1,7 +1,8 @@
 const { 
     json, 
     select, 
-    range,extent,
+    range,
+    extent,
     scaleOrdinal,
     schemePastel1, 
     schemeCategory10, 
@@ -11,20 +12,26 @@ const {
     axisLeft, 
     axisBottom, 
     ascending,
+    scaleThreshold,
 } = d3;
 
+
+console.log(json)
+console.log(scaleThreshold)
 const URL = "https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/global-temperature.json" 
 
 const colors =  [
-    "#4575B4",
-    "#74ADD1", 
-    "#ABD9E9",
-    "#E0F3F8",
-    "#FEFFBF",
-    "#FCE090",
-    "#F8AE62",
-    "#F46D43",
-    "#D72F27",
+    '#67001f',
+    '#b2182b',
+    '#d6604d',
+    '#f4a582',
+    '#fddbc7',
+    '#f7f7f7',
+    '#d1e5f0',
+    '#92c5de',
+    '#4393c3',
+    '#2166ac',
+    '#053061'
 ]
 
 
@@ -48,7 +55,7 @@ json(URL)
         select('#base-temperature')
             .text(baseTemperature)
             
-
+    
         const data = monthlyVariance.map(({year, month, variance}) => {
            return { 
             year: year.toString(),
@@ -57,9 +64,9 @@ json(URL)
             month: months[month - 1]
            }
         });
-
+    
         console.table(data)
-
+    
         // svg 
         const margin = {
             left: 50, 
@@ -67,51 +74,77 @@ json(URL)
             top: 50, 
             bottom: 50
         }
-
+    
         const width = window.innerWidth; 
         const height = window.innerHeight;
-
+    
         const svg = d3.select("body")
                         .append('svg')
                         .attr('width', width - margin.left - margin.right)
                         .attr('height', height - margin.top - margin.bottom)
                         .attr('viewBox', [0,0,width, height])
-
+    
         // Scales
-
+    
         
         const xValue = d => d.year; 
         const yValue = d => d.month;
         const tValue = d => d.temperature
-
-
+    
+    
         const xScale = scaleBand()
                          .domain(data.map(xValue))
                          .range([margin.left, width - margin.right])
         
-
+    
         const yScale = scaleBand()
                         .domain(data.map(yValue))
                         .range([margin.top, height - margin.bottom])
 
-        const tScale = scaleLinear()
-                        .domain(extent(data,tValue))
-                        .range(["white", "#69b3a2"])
 
+        const minTemp = Math.min(...data.map(tValue))
+        const maxTemp = Math.max(...data.map(tValue))
+
+
+        const legendColors = [
+            '#67001f',
+            '#b2182b',
+            '#d6604d',
+            '#f4a582',
+            '#fddbc7',
+            '#f7f7f7',
+            '#d1e5f0',
+            '#92c5de',
+            '#4393c3',
+            '#2166ac',
+            '#053061'
+        ];
+        
+        var tScale = d3
+                        .scaleThreshold()
+                        .domain(
+                          (function (min, max, count) {
+                            var array = [];
+                            var step = (max - min) / count;
+                            for (var i = 1; i < count; i++) {
+                              array.push(min + i * step);
+                            }
+                            return array;
+                          })(minTemp, maxTemp, legendColors.length)
+                        )
+                        .range(legendColors.reverse());
         // Axis
         const xAxis = axisBottom(xScale)
         const yAxis = axisLeft(yScale)
-
-
-
+    
         svg.append('g')
            .attr('transform', `translate(0,${height - margin.bottom})`)
            .call(xAxis.tickValues(xScale.domain().map(year => year.endsWith('0') ? year: '')))
-
+    
         svg.append('g')
            .attr('transform', `translate(${margin.left},0)`)
            .call(yAxis)
-
+    
         svg
          .selectAll("rect")
          .data(data)
