@@ -1,23 +1,14 @@
 const { 
     json, 
     select, 
-    range,
-    extent,
-    scaleOrdinal,
-    schemePastel1, 
-    schemeCategory10, 
     scaleBand, 
     scaleLinear,
-    scaleTime, 
     axisLeft, 
     axisBottom, 
-    ascending,
     scaleThreshold,
+    format
 } = d3;
 
-
-console.log(json)
-console.log(scaleThreshold)
 const URL = "https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/global-temperature.json" 
 
 const colors =  [
@@ -99,7 +90,7 @@ json(URL)
     
         const yScale = scaleBand()
                         .domain(data.map(yValue))
-                        .range([margin.top, height - margin.bottom])
+                        .range([margin.top, (height - margin.bottom)/2])
 
 
         const minTemp = Math.min(...data.map(tValue))
@@ -138,7 +129,7 @@ json(URL)
         const yAxis = axisLeft(yScale)
     
         svg.append('g')
-           .attr('transform', `translate(0,${height - margin.bottom})`)
+           .attr('transform', `translate(0,${(height - margin.bottom)/2})`)
            .call(xAxis.tickValues(xScale.domain().map(year => year.endsWith('0') ? year: '')))
     
         svg.append('g')
@@ -155,5 +146,47 @@ json(URL)
          .attr('width',xScale.bandwidth())
          .attr('height',yScale.bandwidth())
          .attr('fill',d => tScale(d.temperature))
+
+
+        // heatmap legend 
+        // shows the colors in the legend 
+        // shows the tresholds representing each colors
+
+        const legendScale = scaleLinear()
+                                .domain([minTemp,maxTemp])
+                                .range([0, 50*legendColors.length])
+
+        const legendAxis = axisBottom(legendScale)
+
+        svg
+         .append('g')
+         .call(legendAxis.tickValues(tScale.domain()).tickFormat(format('.1f')))
+         .attr('transform',`translate(${margin.left}, ${height - 300})`)
+        
+        
+        const legendData =  tScale.range().map(function (color) {
+            var d = tScale.invertExtent(color);
+            console.log("Legend data", d)
+            if (d[0] === null) {
+              d[0] = legendScale.domain()[0];
+            }
+            if (d[1] === null) {
+              d[1] = legendScale.domain()[1];
+            }
+            return d;
+          })
+
+        svg 
+          .append('g')
+          .selectAll('rect')
+          .data(legendData)
+          .join('rect')
+          .attr('fill', d => tScale(d[0]))
+          .attr('x',d => legendScale(d[0]))
+          .attr('y', (height - 300) - 50)
+          .attr('width',d => {
+            return 40
+          })
+          .attr('height', 50)
         
     })
