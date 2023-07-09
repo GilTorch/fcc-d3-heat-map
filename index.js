@@ -55,8 +55,7 @@ json(URL)
             month: months[month - 1]
            }
         });
-    
-        console.table(data)
+  
     
         // svg 
         const margin = {
@@ -93,8 +92,7 @@ json(URL)
                         .range([margin.top, (height - margin.bottom)/2])
 
 
-        const minTemp = Math.min(...data.map(tValue))
-        const maxTemp = Math.max(...data.map(tValue))
+
 
 
         const legendColors = [
@@ -110,9 +108,11 @@ json(URL)
             '#2166ac',
             '#053061'
         ];
+
+        const minTemp = Math.min(...data.map(tValue))
+        const maxTemp = Math.max(...data.map(tValue))
         
-        var tScale = d3
-                        .scaleThreshold()
+        var tScale =  scaleThreshold()
                         .domain(
                           (function (min, max, count) {
                             var array = [];
@@ -152,41 +152,47 @@ json(URL)
         // shows the colors in the legend 
         // shows the tresholds representing each colors
 
-        const legendScale = scaleLinear()
-                                .domain([minTemp,maxTemp])
-                                .range([0, 50*legendColors.length])
+        console.log(`Domain: ${tScale.domain().map(format('.1f'))}`)
+
+       const legendScale = scaleLinear()
+                            .domain([
+                              minTemp,
+                              maxTemp
+                            ])
+                            .range([0, 400])
 
         const legendAxis = axisBottom(legendScale)
+                             
+        const legend = svg.append('g')
+                          .attr('transform',`translate(${0},${height - 300})`)
 
-        svg
-         .append('g')
-         .call(legendAxis.tickValues(tScale.domain()).tickFormat(format('.1f')))
-         .attr('transform',`translate(${margin.left}, ${height - 300})`)
-        
-        
-        const legendData =  tScale.range().map(function (color) {
-            var d = tScale.invertExtent(color);
-            console.log("Legend data", d)
-            if (d[0] === null) {
-              d[0] = legendScale.domain()[0];
-            }
-            if (d[1] === null) {
-              d[1] = legendScale.domain()[1];
-            }
-            return d;
-          })
+        const tresholdValues = tScale.domain();
 
-        svg 
-          .append('g')
-          .selectAll('rect')
-          .data(legendData)
+        let coupledTreshold = [];
+
+        for(i = 0; i < tresholdValues.length; i++){
+          let nextValue = tresholdValues[i+1] ? tresholdValues[i+1] : maxTemp;
+          coupledTreshold.push([tresholdValues[i],nextValue])
+        }
+
+        console.log(`Couples: ${JSON.stringify(coupledTreshold)}`)
+
+        legend 
+           .call(legendAxis    
+            .tickValues(tScale.domain())
+           .tickFormat(d3.format('.1f')))
+
+        legend
+          .selectAll('.legend')
+          .data(coupledTreshold)
           .join('rect')
-          .attr('fill', d => tScale(d[0]))
-          .attr('x',d => legendScale(d[0]))
-          .attr('y', (height - 300) - 50)
-          .attr('width',d => {
-            return 40
-          })
-          .attr('height', 50)
+          .attr('x', d => legendScale(d[0]))
+          .attr('y',-40)
+          .attr('fill',d => tScale(d[0]))
+          .attr('width',d => legendScale(d[1]) - legendScale(d[0]))
+          .attr('height', 40)
+            
+
+       
         
     })
