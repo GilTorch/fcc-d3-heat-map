@@ -1,3 +1,4 @@
+
 let globalMousePos = { x: undefined, y: undefined}
 window.addEventListener('mousemove', (event) => {
     globalMousePos = { x: event.clientX, y: event.clientY };
@@ -63,6 +64,7 @@ json(URL)
           year: year.toString(),
           temperature: +parseFloat(baseTemperature + variance).toFixed(1), 
           variance,
+          monthIndex: month - 1,
           month: months[month - 1]
          }
       });
@@ -142,7 +144,7 @@ json(URL)
       svg.append('g')
          .attr('id','x-axis')
          .attr('transform', `translate(0,${(height - margin.bottom)/2})`)
-         .call(xAxis.tickValues(xScale.domain().map(year => year.endsWith('0') ? year: '')))
+         .call(xAxis.tickValues(xScale.domain().filter(date => date % 10 === 0)))
   
       svg.append('g')
          .attr('id','y-axis')
@@ -158,7 +160,7 @@ json(URL)
        .join("rect")
        .attr('class','cell')
        .attr('id',(_,i) => `cell-${i}`)
-       .attr('data-month', d => +d.month)
+       .attr('data-month', d => d.monthIndex)
        .attr('data-year', d => +d.year)
        .attr('data-temp', d => +d.temperature)
        .attr('x', d => xScale(d.year))
@@ -180,9 +182,6 @@ json(URL)
         tooltip.style('opacity',1)
         tooltip.html(text)
         tooltip.attr('data-year', year)
-        console.log(`current rect`,e.target)
-        console.log(`current rect id`, e.target.getAttribute('id'))
-
         const currentRectId = e.target.getAttribute('id');
 
         svg 
