@@ -1,3 +1,8 @@
+let globalMousePos = { x: undefined, y: undefined}
+window.addEventListener('mousemove', (event) => {
+    globalMousePos = { x: event.clientX, y: event.clientY };
+  });
+
 const { 
   json, 
   select, 
@@ -6,7 +11,7 @@ const {
   axisLeft, 
   axisBottom, 
   scaleThreshold,
-  format,
+  format
 } = d3;
 
 const URL = [
@@ -144,15 +149,15 @@ json(URL)
          .attr('transform', `translate(${margin.left},0)`)
          .call(yAxis)
   
-    // const tip = tip().attr('id', 'tooltip');
-
-    // svg.call(tip)
+    const tooltip = select('#tooltip')
+    tooltip.style('opacity',0)
 
       svg
        .selectAll("rect")
        .data(data)
        .join("rect")
        .attr('class','cell')
+       .attr('id',(_,i) => `cell-${i}`)
        .attr('data-month', d => +d.month)
        .attr('data-year', d => +d.year)
        .attr('data-temp', d => +d.temperature)
@@ -161,8 +166,40 @@ json(URL)
        .attr('width',xScale.bandwidth())
        .attr('height',yScale.bandwidth())
        .attr('fill',d => tScale(d.temperature))
-      //  .on('mouseover', tip.show)
-      //  .on('mouseout', tip.hide)
+       .on('mouseover', (e,d) => {
+        console.log(`Current Data`,d)
+        const { year, month, temperature,variance } = d;
+
+        const text = `
+           <p>${year} - ${month}</p>
+           <p>${temperature}℃</p>
+           <p>${format(".1f")(variance)}℃</p>
+        `
+        tooltip.style('left',globalMousePos.x+'px')
+        tooltip.style('top', margin.top+50+'px')
+        tooltip.style('opacity',1)
+        tooltip.html(text)
+        tooltip.attr('data-year', year)
+        console.log(`current rect`,e.target)
+        console.log(`current rect id`, e.target.getAttribute('id'))
+
+        const currentRectId = e.target.getAttribute('id');
+
+        svg 
+         .select(`#${currentRectId}`)
+         .attr('stroke','black')
+         .attr('stroke-width', 1)
+        // const rectSelected = e.target.
+      })
+      .on('mouseout', (e) => {
+        tooltip.style('opacity',0)
+        const currentRectId = e.target.getAttribute('id');
+
+        svg 
+         .select(`#${currentRectId}`)
+         .attr('stroke','black')
+         .attr('stroke-width', 0)
+      })
 
       // heatmap legend 
       // shows the colors in the legend 
@@ -209,8 +246,5 @@ json(URL)
         .attr('height', 30)
         .attr('stroke', 'black')
         .attr('stroke-width',1)
-          
-tip = d3.tip().attr('class', 'd3-tip').html(function(d) { return d; });
-     
       
   })
