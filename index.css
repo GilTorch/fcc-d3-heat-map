@@ -15,3 +15,8 @@
     font-size: 1rem;
     color: white;
 }
+
+
+#title, #description{
+    text-align: center;
+}
